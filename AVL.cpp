@@ -1,185 +1,192 @@
-#include <bits/stdc++.h>
+#include <iostream>
+#include <stack>
 using namespace std;
 
-struct Node {
-    int key, height;
-    Node *left, *right;
-    Node(int k) : key(k), height(1), left(nullptr), right(nullptr) {}
+class Node {
+public:
+    int data;
+    Node* left;
+    Node* right;
+    int height;
+
+    Node(int value) {
+        data = value;
+        left = right = nullptr;
+        height = 1;
+    }
 };
 
-int height(Node *n) { return n ? n->height : 0; }
-int getBalance(Node *n) { return n ? height(n->left) - height(n->right) : 0; }
+// Get height of node
+int height(Node* node) {
+    return node ? node->height : 0;
+}
 
-Node *rightRotate(Node *y) {
-    Node *x = y->left, *T2 = x->right;
-    x->right = y; y->left = T2;
+// Get balance factor of node
+int balanceFactor(Node* node) {
+    return node ? height(node->left) - height(node->right) : 0;
+}
+
+// Right rotation
+Node* rightRotate(Node* y) {
+    Node* x = y->left;
+    Node* T2 = x->right;
+
+    x->right = y;
+    y->left = T2;
+
     y->height = max(height(y->left), height(y->right)) + 1;
     x->height = max(height(x->left), height(x->right)) + 1;
+
     return x;
 }
 
-Node *leftRotate(Node *x) {
-    Node *y = x->right, *T2 = y->left;
-    y->left = x; x->right = T2;
+// Left rotation
+Node* leftRotate(Node* y) {
+    Node* x = y->right;
+    Node* T2 = x->left;
+
+    x->left = y;
+    y->right = T2;
+
     x->height = max(height(x->left), height(x->right)) + 1;
     y->height = max(height(y->left), height(y->right)) + 1;
-    return y;
+
+    return x;
 }
 
-Node* insert(Node* node, int key) {
-    if (!node) return new Node(key);
-    if (key < node->key) node->left = insert(node->left, key);
-    else if (key > node->key) node->right = insert(node->right, key);
-    else return node;
+// Insert into AVL tree
+Node* insert(Node* node, int value) {
+    if (!node) return new Node(value);
+
+    if (value < node->data)
+        node->left = insert(node->left, value);
+    else if (value > node->data)
+        node->right = insert(node->right, value);
+    else {
+        cout << "Duplicate value ignored: " << value << endl;
+        return node;
+    }
 
     node->height = 1 + max(height(node->left), height(node->right));
-    int balance = getBalance(node);
+    int balance = balanceFactor(node);
 
-    if (balance > 1 && key < node->left->key) return rightRotate(node);
-    if (balance < -1 && key > node->right->key) return leftRotate(node);
-    if (balance > 1 && key > node->left->key) { node->left = leftRotate(node->left); return rightRotate(node); }
-    if (balance < -1 && key < node->right->key) { node->right = rightRotate(node->right); return leftRotate(node); }
+    // Left Left Case
+    if (balance > 1 && value < node->left->data)
+        return rightRotate(node);
+
+    // Right Right Case
+    if (balance < -1 && value > node->right->data)
+        return leftRotate(node);
+
+    // Left Right Case
+    if (balance > 1 && value > node->left->data) {
+        node->left = leftRotate(node->left);
+        return rightRotate(node);
+    }
+
+    // Right Left Case
+    if (balance < -1 && value < node->right->data) {
+        node->right = rightRotate(node->right);
+        return leftRotate(node);
+    }
+
     return node;
 }
 
-void inOrder(Node *root) {
-    if (!root) return;
-    inOrder(root->left);
-    cout << root->key << " ";
-    inOrder(root->right);
+// Recursive Traversals
+void inorderRecursive(Node* root) {
+    if (root) {
+        inorderRecursive(root->left);
+        cout << root->data << " ";
+        inorderRecursive(root->right);
+    }
 }
 
-void preOrder(Node *root) {
-    if (!root) return;
-    cout << root->key << " ";
-    preOrder(root->left);
-    preOrder(root->right);
+void preorderRecursive(Node* root) {
+    if (root) {
+        cout << root->data << " ";
+        preorderRecursive(root->left);
+        preorderRecursive(root->right);
+    }
 }
 
-void postOrder(Node *root) {
-    if (!root) return;
-    postOrder(root->left);
-    postOrder(root->right);
-    cout << root->key << " ";
+void postorderRecursive(Node* root) {
+    if (root) {
+        postorderRecursive(root->left);
+        postorderRecursive(root->right);
+        cout << root->data << " ";
+    }
 }
 
-void nonRecursiveInOrder(Node *root) {
-    stack<Node*> st;
-    Node *curr = root;
-    while (curr || !st.empty()) {
-        while (curr) {
-            st.push(curr);
-            curr = curr->left;
+// Non-Recursive Traversals
+void inorderNonRecursive(Node* root) {
+    stack<Node*> s;
+    Node* current = root;
+    while (current || !s.empty()) {
+        while (current) {
+            s.push(current);
+            current = current->left;
         }
-        curr = st.top(); st.pop();
-        cout << curr->key << " ";
-        curr = curr->right;
+        current = s.top(); s.pop();
+        cout << current->data << " ";
+        current = current->right;
     }
 }
 
-void nonRecursivePreOrder(Node *root) {
+void preorderNonRecursive(Node* root) {
     if (!root) return;
-    stack<Node*> st;
-    st.push(root);
-    while (!st.empty()) {
-        Node *curr = st.top(); st.pop();
-        cout << curr->key << " ";
-        if (curr->right) st.push(curr->right);
-        if (curr->left) st.push(curr->left);
+    stack<Node*> s;
+    s.push(root);
+    while (!s.empty()) {
+        Node* node = s.top(); s.pop();
+        cout << node->data << " ";
+        if (node->right) s.push(node->right);
+        if (node->left) s.push(node->left);
     }
 }
 
-void nonRecursivePostOrder(Node *root) {
+void postorderNonRecursive(Node* root) {
     if (!root) return;
-    stack<Node*> st1, st2;
-    st1.push(root);
-    while (!st1.empty()) {
-        Node *curr = st1.top(); st1.pop();
-        st2.push(curr);
-        if (curr->left) st1.push(curr->left);
-        if (curr->right) st1.push(curr->right);
+    stack<Node*> s1, s2;
+    s1.push(root);
+    while (!s1.empty()) {
+        Node* node = s1.top(); s1.pop();
+        s2.push(node);
+        if (node->left) s1.push(node->left);
+        if (node->right) s1.push(node->right);
     }
-    while (!st2.empty()) {
-        cout << st2.top()->key << " ";
-        st2.pop();
+    while (!s2.empty()) {
+        cout << s2.top()->data << " ";
+        s2.pop();
     }
 }
 
-bool search(Node *root, int key) {
-    while (root) {
-        if (key == root->key) return true;
-        root = key < root->key ? root->left : root->right;
-    }
-    return false;
-}
-
-void displayMenu() {
-    cout << "\n================= AVL Tree Menu =================\n";
-    cout << "1. Insert a Node\n";
-    cout << "2. Recursive In-order Traversal\n";
-    cout << "3. Recursive Pre-order Traversal\n";
-    cout << "4. Recursive Post-order Traversal\n";
-    cout << "5. Non-Recursive In-order Traversal\n";
-    cout << "6. Non-Recursive Pre-order Traversal\n";
-    cout << "7. Non-Recursive Post-order Traversal\n";
-    cout << "8. Search for a Node\n";
-    cout << "9. Exit\n";
-    cout << "================================================\n";
-    cout << "Enter your choice: ";
-}
-
-void displayTraversal(const string& type, void (*traversal)(Node *), Node *root) {
-    cout << "\n" << type << " Traversal: ";
-    traversal(root);
-    cout << "\n------------------------------------------------\n";
-}
-
+// Main function
 int main() {
-    Node *root = nullptr;
-    int choice, num;
+    Node* root = nullptr;
+    int n, value;
 
-    do {
-        displayMenu();
-        cin >> choice;
-        cout << "\n";
+    cout << "Enter number of nodes to insert: ";
+    cin >> n;
+    cout << "Enter " << n << " values:\n";
+    for (int i = 0; i < n; ++i) {
+        cin >> value;
+        root = insert(root, value);
+    }
 
-        switch (choice) {
-            case 1:
-                cout << "Enter value to insert: ";
-                cin >> num;
-                root = insert(root, num);
-                cout << num << " inserted successfully!\n";
-                break;
-            case 2:
-                displayTraversal("Recursive In-order", inOrder, root);
-                break;
-            case 3:
-                displayTraversal("Recursive Pre-order", preOrder, root);
-                break;
-            case 4:
-                displayTraversal("Recursive Post-order", postOrder, root);
-                break;
-            case 5:
-                displayTraversal("Non-Recursive In-order", nonRecursiveInOrder, root);
-                break;
-            case 6:
-                displayTraversal("Non-Recursive Pre-order", nonRecursivePreOrder, root);
-                break;
-            case 7:
-                displayTraversal("Non-Recursive Post-order", nonRecursivePostOrder, root);
-                break;
-            case 8:
-                cout << "Enter value to search: ";
-                cin >> num;
-                cout << (search(root, num) ? "Node found!" : "Node not found!") << "\n";
-                break;
-            case 9:
-                cout << "Exiting program. Thank you!\n";
-                break;
-            default:
-                cout << "Invalid choice! Please enter a number between 1-9.\n";
-        }
-    } while (choice != 9);
+    cout << "\nInorder Recursive: ";
+    inorderRecursive(root);
+    cout << "\nPreorder Recursive: ";
+    preorderRecursive(root);
+    cout << "\nPostorder Recursive: ";
+    postorderRecursive(root);
+
+    cout << "\nInorder Non-Recursive: ";
+    inorderNonRecursive(root);
+    cout << "\nPreorder Non-Recursive: ";
+    preorderNonRecursive(root);
+    cout << "\nPostorder Non-Recursive: ";
+    postorderNonRecursive(root);
 
     return 0;
 }
